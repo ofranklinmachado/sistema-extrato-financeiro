@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Extrato Financeiro
 
-## Getting Started
+Sistema completo para gerenciamento de extratos financeiros de clientes, incluindo importação de faturas, lançamento de pagamentos e aplicação de regras de negócio específicas.
 
-First, run the development server:
+## 🚀 Funcionalidades
 
+### ✅ Gestão de Clientes
+- Cadastro de clientes com limite de crédito
+- Configuração de prazo de pagamento por cliente
+- Listagem e edição de clientes
+
+### ✅ Importação de Faturas
+- Upload de planilhas Excel/CSV
+- Pré-visualização antes da importação
+- Área de staging para faturas importadas
+- Processamento em lote para o extrato
+
+### ✅ Lançamento de Pagamentos
+- Registro de pagamentos recebidos
+- Associação automática com clientes
+- Múltiplas contas de destino
+
+### ✅ Extrato do Cliente
+- Visualização completa do extrato por cliente
+- Cálculo automático de saldos
+- Aplicação de regras de prazo de pagamento
+- Agrupamento por períodos de vencimento
+
+### ✅ Regras de Negócio
+- **Clientes com prazo:** Pedidos 01-15 vencem dia 30, pedidos 16-31 vencem dia 15 do mês seguinte
+- **Clientes sem prazo:** Pagamento à vista
+- Cálculo automático de saldo em aberto e disponível
+
+## 🛠️ Tecnologias
+
+- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
+- **Backend:** Next.js API Routes
+- **Banco de Dados:** Supabase (PostgreSQL)
+- **UI Components:** Shadcn/ui
+- **Ícones:** Lucide React
+
+## 📋 Pré-requisitos
+
+- Node.js 18+
+- Conta no Supabase
+- npm ou yarn
+
+## 🚀 Instalação
+
+1. **Clone o repositório:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <url-do-repositorio>
+cd sistema-extrato-financeiro
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Instale as dependências:**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Configure o Supabase:**
+   - Siga as instruções em `supabase-setup.md`
+   - Configure as variáveis de ambiente no `.env.local`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Execute o projeto:**
+```bash
+npm run dev
+```
 
-## Learn More
+5. **Acesse o sistema:**
+   - Abra http://localhost:3000 no navegador
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Estrutura do Projeto
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/                    # Páginas e API routes
+│   ├── api/               # Endpoints da API
+│   ├── clientes/          # Páginas de gestão de clientes
+│   ├── faturas/           # Páginas de faturas
+│   ├── pagamentos/        # Páginas de pagamentos
+│   └── extrato/           # Páginas de extrato
+├── components/            # Componentes React
+│   ├── ui/               # Componentes de interface
+│   └── layout/           # Componentes de layout
+├── lib/                  # Utilitários e configurações
+│   ├── supabase.ts       # Cliente Supabase
+│   └── business-rules.ts # Regras de negócio
+└── types/                # Definições de tipos TypeScript
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔄 Fluxo de Trabalho
 
-## Deploy on Vercel
+1. **Cadastrar Clientes:** Defina se possuem prazo de pagamento
+2. **Importar Faturas:** Upload de planilha → Staging → Processamento
+3. **Lançar Pagamentos:** Registre pagamentos recebidos
+4. **Consultar Extrato:** Visualize saldo e histórico por cliente
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎯 Próximas Funcionalidades
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [ ] Relatórios e dashboards
+- [ ] Exportação de extratos em PDF
+- [ ] Notificações de vencimento
+- [ ] Integração com APIs bancárias
+- [ ] Controle de usuários e permissões
+
+## 📞 Suporte
+
+Para dúvidas ou sugestões, entre em contato através do sistema de issues do repositório.
+
+---
+
+**Desenvolvido com ❤️ para otimizar o controle financeiro de pequenas e médias empresas.**
