@@ -33,7 +33,11 @@ export function FileUpload({ onFileUpload, acceptedFileTypes = '.csv, .xls, .xls
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: acceptedFileTypes.split(',').reduce((acc, type) => ({ ...acc, [type.trim()]: [] }), {}),
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+    },
     multiple: false,
   });
 

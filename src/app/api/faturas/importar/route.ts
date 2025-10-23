@@ -19,10 +19,12 @@ export async function POST(request: NextRequest) {
 
     // Lê o arquivo Excel
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'array' });
+    const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet);
+
+    console.log('Total de linhas no Excel:', data.length);
 
     if (data.length === 0) {
       return NextResponse.json(
@@ -33,37 +35,85 @@ export async function POST(request: NextRequest) {
 
     const db = getDatabase();
     const faturas = [];
+    let erros = 0;
 
     // Processa cada linha do Excel
     for (const row of data as any[]) {
       try {
-        // Extrai os campos conforme especificação:
-        // Data Emissão, ID Pessoa, Cliente/Fornecedor, Vlr. Parcela, Nº Duplicata
-        const dataEmissao = row['Data Emissão'] || row['Data Emissao'] || row['data_emissao'];
-        const idPessoa = parseInt(row['ID Pessoa'] || row['ID Pessoa'] || row['id_pessoa']);
-        const clienteNome = row['Cliente/Fornecedor'] || row['Cliente'] || row['cliente'];
-        const valorParcela = parseFloat(String(row['Vlr. Parcela'] || row['Valor'] || row['valor']).replace(/[^\d,.-]/g, '').replace(',', '.'));
-        const numeroDuplicata = String(row['Nº Duplicata'] || row['Numero'] || row['numero']);
+        // Campos do Excel conforme análise:
+        // - Data Emissão: datetime
+        // - ID Pessoa: number
+        // - Cliente/Fornecedor: string
+        // - Vlr. Parcela: number (já em centavos)
+        // - Nº Duplicata: string
+        
+        const dataEmissao = row['Data Emissão'];
+        const idPessoa = row['ID Pessoa'];
+        const clienteNome = row['Cliente/Fornecedor'];
+        const valorParcela = row['Vlr. Parcela'];
+        const numeroDuplicata = String(row['Nº Duplicata'] || '');
 
-        if (!dataEmissao || isNaN(idPessoa) || !clienteNome || isNaN(valorParcela) || !numeroDuplicata) {
-          console.warn('Linha inválida ignorada:', row);
+        // Validações
+        if (!dataEmissao) {
+          console.warn('Data de emissão ausente:', row);
+          erros++;
+          continue;
+        }
+
+        if (!idPessoa || typeof idPessoa !== 'number') {
+          console.warn('ID Pessoa inválido:', row);
+          erros++;
+          continue;
+        }
+
+        if (!clienteNome) {
+          console.warn('Nome do cliente ausente:', row);
+          erros++;
+          continue;
+        }
+
+        if (valorParcela === undefined || valorParcela === null || typeof valorParcela !== 'number') {
+          console.warn('Valor da parcela inválido:', row);
+          erros++;
+          continue;
+        }
+
+        if (!numeroDuplicata) {
+          console.warn('Número da duplicata ausente:', row);
+          erros++;
           continue;
         }
 
         // Converte data para formato ISO (YYYY-MM-DD)
         let dataFormatada: string;
-        if (typeof dataEmissao === 'number') {
+        if (dataEmissao instanceof Date) {
+          // Data já é um objeto Date
+          const ano = dataEmissao.getFullYear();
+          const mes = String(dataEmissao.getMonth() + 1).padStart(2, '0');
+          const dia = String(dataEmissao.getDate()).padStart(2, '0');
+          dataFormatada = `${ano}-${mes}-${dia}`;
+        } else if (typeof dataEmissao === 'number') {
           // Data do Excel (número de dias desde 1900-01-01)
           const date = XLSX.SSF.parse_date_code(dataEmissao);
           dataFormatada = `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+        } else if (typeof dataEmissao === 'string') {
+          // Data em formato string (DD/MM/YYYY ou YYYY-MM-DD)
+          if (dataEmissao.includes('/')) {
+            const [dia, mes, ano] = dataEmissao.split('/');
+            dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+          } else {
+            dataFormatada = dataEmissao;
+          }
         } else {
-          // Data em formato string (DD/MM/YYYY)
-          const [dia, mes, ano] = String(dataEmissao).split('/');
-          dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+          console.warn('Formato de data não reconhecido:', dataEmissao);
+          erros++;
+          continue;
         }
 
-        // Converte valor para centavos
-        const valorCentavos = Math.round(valorParcela * 100);
+        // Valor já vem em centavos do Excel
+        const valorCentavos = Math.round(valorParcela);
+
+        console.log(`Processando: Cliente ${idPessoa} - ${clienteNome}, Valor: ${valorCentavos} centavos, Data: ${dataFormatada}`);
 
         // Insere na tabela de staging
         const result = db.prepare(`
@@ -83,17 +133,23 @@ export async function POST(request: NextRequest) {
         });
       } catch (error) {
         console.error('Erro ao processar linha:', row, error);
+        erros++;
       }
     }
 
+    console.log(`Importação concluída: ${faturas.length} sucessos, ${erros} erros`);
+
     return NextResponse.json({
-      message: `${faturas.length} faturas importadas com sucesso`,
-      faturas
+      message: `${faturas.length} faturas importadas com sucesso${erros > 0 ? ` (${erros} erros)` : ''}`,
+      faturas,
+      total: data.length,
+      sucessos: faturas.length,
+      erros
     });
   } catch (error) {
     console.error('Erro ao importar faturas:', error);
     return NextResponse.json(
-      { error: 'Erro ao importar faturas' },
+      { error: 'Erro ao importar faturas: ' + (error instanceof Error ? error.message : 'Erro desconhecido') },
       { status: 500 }
     );
   }
