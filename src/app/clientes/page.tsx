@@ -1,15 +1,30 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/layout/navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Cliente } from '@/types'
-import { formatarMoeda } from '@/lib/business-rules'
 import { Loader2, PlusCircle, Edit, Eye } from 'lucide-react'
 import Link from 'next/link'
+
+interface Cliente {
+  id: number
+  nome: string
+  saldo_aberto_centavos: number
+  saldo_disponivel_centavos: number
+  limite_centavos: number
+  possui_prazo_pagamento: number | boolean
+  created_at: string
+  updated_at: string
+}
+
+function formatarMoeda(centavos: number): string {
+  const valor = centavos / 100
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  })
+}
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -40,7 +55,6 @@ export default function ClientesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
@@ -71,27 +85,47 @@ export default function ClientesPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nome</TableHead>
                         <TableHead>ID</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Saldo em Aberto</TableHead>
+                        <TableHead>Saldo Disponível</TableHead>
                         <TableHead>Limite de Crédito</TableHead>
-                        <TableHead>Possui Prazo</TableHead>
+                        <TableHead>Tipo</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {clientes.map((cliente) => (
                         <TableRow key={cliente.id}>
-                          <TableCell className="font-medium">{cliente.nome}</TableCell>
-                          <TableCell>{cliente.id.substring(0, 8)}...</TableCell>
-                          <TableCell>{formatarMoeda(cliente.limite_credito_centavos)}</TableCell>
-                          <TableCell>{cliente.possui_prazo_pagamento ? 'Sim' : 'Não'}</TableCell>
+                          <TableCell className="font-medium">{cliente.id}</TableCell>
+                          <TableCell>{cliente.nome}</TableCell>
+                          <TableCell>{formatarMoeda(cliente.saldo_aberto_centavos)}</TableCell>
+                          <TableCell>{formatarMoeda(cliente.saldo_disponivel_centavos)}</TableCell>
+                          <TableCell>{formatarMoeda(cliente.limite_centavos)}</TableCell>
+                          <TableCell>
+                            {cliente.possui_prazo_pagamento ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Com Prazo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                À Vista
+                              </span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
-                            <Link href={`/extrato/${cliente.id}`} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 mr-2">
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                            <Link href={`/clientes/editar/${cliente.id}`} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                              <Edit className="h-4 w-4" />
-                            </Link>
+                            <div className="flex justify-end gap-2">
+                              <Link href={`/extrato/${cliente.id}`}>
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Link href={`/clientes/editar/${cliente.id}`}>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -106,5 +140,4 @@ export default function ClientesPage() {
     </div>
   )
 }
-
 
