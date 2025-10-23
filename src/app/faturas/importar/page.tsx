@@ -97,7 +97,7 @@ export default function ImportarFaturasPage() {
             cliente_nome: clienteNome,
             numero_fatura: numeroDuplicata,
             data_emissao: dataFormatada,
-            valor_centavos: Math.round(valorParcela)
+            valor_centavos: Math.round(valorParcela * 100) // Converte reais para centavos
           })
         }
 

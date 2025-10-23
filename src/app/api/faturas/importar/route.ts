@@ -110,8 +110,9 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Valor já vem em centavos do Excel
-        const valorCentavos = Math.round(valorParcela);
+        // Valor vem em reais do Excel, precisa converter para centavos
+        // Exemplo: 6675 (reais) → 667500 (centavos)
+        const valorCentavos = Math.round(valorParcela * 100);
 
         console.log(`Processando: Cliente ${idPessoa} - ${clienteNome}, Valor: ${valorCentavos} centavos, Data: ${dataFormatada}`);
 
